@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Viewer eBook - Semua Halaman</title>
+  <title>Viewer eBook - Tajam di Zoom</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
     body {
@@ -23,14 +23,9 @@
       border: 1px solid #ccc;
       background-color: white;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      max-width: 100%;
+      width: 100%;
       height: auto;
-    }
-
-    #loading {
-      text-align: center;
-      font-size: 1.2rem;
-      margin-top: 40px;
+      image-rendering: optimizeQuality;
     }
 
     @media print {
@@ -41,8 +36,7 @@
   </style>
 </head>
 <body oncontextmenu="return false">
-  <div id="loading">Sedang memuat eBook...</div>
-  <div id="pdf-container" style="display:none;"></div>
+  <div id="pdf-container"></div>
 
   <script>
     const url = 'Juknis Penyelenggaran Kesehatan Haji Di Arab Saudi.pdf';
@@ -50,49 +44,36 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
     const container = document.getElementById('pdf-container');
-    const loadingText = document.getElementById('loading');
+
+    const HIGH_DPI_SCALE = 2.5; // lebih tinggi = lebih tajam
 
     pdfjsLib.getDocument(url).promise.then(pdf => {
       const totalPages = pdf.numPages;
 
-      let renderPage = function (pageNumber) {
+      for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
         pdf.getPage(pageNumber).then(page => {
-          const desiredWidth = Math.min(window.innerWidth * 0.95, 1000);
-          const unscaledViewport = page.getViewport({ scale: 1 });
-          const scale = desiredWidth / unscaledViewport.width;
-          const viewport = page.getViewport({ scale: scale * window.devicePixelRatio });
+          const viewport = page.getViewport({ scale: HIGH_DPI_SCALE });
 
           const canvas = document.createElement('canvas');
           const context = canvas.getContext('2d');
 
           canvas.width = viewport.width;
           canvas.height = viewport.height;
-          canvas.style.width = `${viewport.width / window.devicePixelRatio}px`;
-          canvas.style.height = `${viewport.height / window.devicePixelRatio}px`;
+          canvas.style.width = `${viewport.width / HIGH_DPI_SCALE}px`;
+          canvas.style.height = `${viewport.height / HIGH_DPI_SCALE}px`;
 
           container.appendChild(canvas);
 
           page.render({
             canvasContext: context,
             viewport: viewport
-          }).promise.then(() => {
-            if (pageNumber < totalPages) {
-              renderPage(pageNumber + 1); // Render halaman berikutnya
-            } else {
-              loadingText.style.display = 'none';
-              container.style.display = 'flex';
-            }
           });
         });
-      };
-
-      renderPage(1); // Mulai dari halaman 1
+      }
     }).catch(error => {
-      loadingText.innerText = 'Gagal memuat eBook. Cek kembali file PDF-nya.';
       console.error('Gagal memuat PDF:', error);
     });
 
-    // Blokir shortcut untuk menyimpan, inspect, dll
     document.addEventListener('keydown', function (e) {
       if ((e.ctrlKey && ['s', 'p', 'u'].includes(e.key.toLowerCase())) || e.key === 'F12') {
         e.preventDefault();
