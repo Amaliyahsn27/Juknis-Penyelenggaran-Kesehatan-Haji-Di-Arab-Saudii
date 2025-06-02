@@ -2,13 +2,16 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Viewer eBook - Tajam di Zoom</title>
+  <title>Viewer PDF Responsif dan Tajam</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
-    body {
+    html, body {
       margin: 0;
+      padding: 0;
       background: #f0f0f0;
       font-family: Arial, sans-serif;
+      width: 100%;
+      overflow-x: hidden;
     }
 
     #pdf-container {
@@ -16,16 +19,17 @@
       flex-direction: column;
       align-items: center;
       padding: 16px;
+      max-width: 100%;
     }
 
     canvas {
-      margin-bottom: 20px;
-      border: 1px solid #ccc;
-      background-color: white;
+      display: block;
+      margin: 0 auto 24px auto;
+      background: white;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       width: 100%;
       height: auto;
-      image-rendering: optimizeQuality;
+      max-width: 100%;
     }
 
     @media print {
@@ -40,27 +44,29 @@
 
   <script>
     const url = 'Juknis Penyelenggaran Kesehatan Haji Di Arab Saudi.pdf';
-
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
     const container = document.getElementById('pdf-container');
-
-    const HIGH_DPI_SCALE = 2.5; // lebih tinggi = lebih tajam
+    const DPI_SCALE = window.devicePixelRatio || 2;
 
     pdfjsLib.getDocument(url).promise.then(pdf => {
       const totalPages = pdf.numPages;
 
       for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
         pdf.getPage(pageNumber).then(page => {
-          const viewport = page.getViewport({ scale: HIGH_DPI_SCALE });
+          const originalViewport = page.getViewport({ scale: 1 });
+          const scale = (container.clientWidth / originalViewport.width) * DPI_SCALE;
+          const viewport = page.getViewport({ scale });
 
           const canvas = document.createElement('canvas');
           const context = canvas.getContext('2d');
 
           canvas.width = viewport.width;
           canvas.height = viewport.height;
-          canvas.style.width = `${viewport.width / HIGH_DPI_SCALE}px`;
-          canvas.style.height = `${viewport.height / HIGH_DPI_SCALE}px`;
+
+          // CSS tampilan tetap responsif
+          canvas.style.width = `${viewport.width / DPI_SCALE}px`;
+          canvas.style.height = `${viewport.height / DPI_SCALE}px`;
 
           container.appendChild(canvas);
 
@@ -74,6 +80,7 @@
       console.error('Gagal memuat PDF:', error);
     });
 
+    // Blokir shortcut devtools & simpan
     document.addEventListener('keydown', function (e) {
       if ((e.ctrlKey && ['s', 'p', 'u'].includes(e.key.toLowerCase())) || e.key === 'F12') {
         e.preventDefault();
