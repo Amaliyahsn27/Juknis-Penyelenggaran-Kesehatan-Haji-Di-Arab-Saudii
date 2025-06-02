@@ -2,41 +2,41 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Viewer eBook - Scroll Vertikal</title>
+  <title>Viewer eBook Scroll Vertikal</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
-    body {
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
       margin: 0;
+      padding: 0;
       background: #f9f9f9;
-      font-family: Arial, sans-serif;
+      font-family: sans-serif;
+      overflow-x: hidden; /* cegah scroll ke samping */
     }
 
     #pdf-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 20px;
-      gap: 20px;
+      padding: 16px;
+      gap: 24px;
     }
 
     canvas {
+      max-width: 100%;        /* agar tidak lebih lebar dari layar */
+      height: auto;           /* pertahankan rasio */
       border: 1px solid #ccc;
       background: white;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      max-width: 100%;
-      height: auto;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
 
     #loading {
       text-align: center;
       font-size: 1.2rem;
-      margin-top: 40px;
-    }
-
-    @media print {
-      body {
-        display: none !important;
-      }
+      margin: 2rem;
     }
   </style>
 </head>
@@ -51,50 +51,49 @@
     const container = document.getElementById('pdf-container');
     const loadingText = document.getElementById('loading');
 
-    pdfjsLib.getDocument(url).promise.then(pdf => {
-      const totalPages = pdf.numPages;
+    function renderPage(pdf, pageNumber) {
+      pdf.getPage(pageNumber).then(page => {
+        const scale = 1.5;
+        const viewport = page.getViewport({ scale });
 
-      const renderPage = pageNumber => {
-        pdf.getPage(pageNumber).then(page => {
-          const scale = 2;
-          const viewport = page.getViewport({ scale: scale * window.devicePixelRatio });
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
 
-          const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
 
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
+        // Untuk responsif: set style width agar canvas mengikuti max 100%
+        canvas.style.width = '100%';
+        canvas.style.height = 'auto';
 
-          // Atur tampilan agar responsif, tapi tidak mengecilkan kualitas
-          canvas.style.width = `${viewport.width / window.devicePixelRatio}px`;
-          canvas.style.height = `${viewport.height / window.devicePixelRatio}px`;
+        container.appendChild(canvas);
 
-          container.appendChild(canvas);
-
-          page.render({
-            canvasContext: context,
-            viewport: viewport
-          }).promise.then(() => {
-            if (pageNumber < totalPages) {
-              renderPage(pageNumber + 1);
-            } else {
-              loadingText.style.display = 'none';
-              container.style.display = 'flex';
-            }
-          });
+        page.render({
+          canvasContext: context,
+          viewport: viewport
+        }).promise.then(() => {
+          if (pageNumber < pdf.numPages) {
+            renderPage(pdf, pageNumber + 1);
+          } else {
+            loadingText.style.display = 'none';
+            container.style.display = 'flex';
+          }
         });
-      };
+      });
+    }
 
-      renderPage(1);
+    pdfjsLib.getDocument(url).promise.then(pdf => {
+      renderPage(pdf, 1);
     }).catch(error => {
-      loadingText.innerText = 'Gagal memuat eBook. Cek kembali file PDF-nya.';
-      console.error('Gagal memuat PDF:', error);
+      loadingText.textContent = 'Gagal memuat PDF.';
+      console.error(error);
     });
 
+    // Cegah shortcut simpan, print, inspect
     document.addEventListener('keydown', function (e) {
       if ((e.ctrlKey && ['s', 'p', 'u'].includes(e.key.toLowerCase())) || e.key === 'F12') {
         e.preventDefault();
-        alert('Aksi ini tidak diizinkan.');
+        alert('Aksi ini tidak diperbolehkan.');
       }
     });
   </script>
