@@ -2,41 +2,39 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Viewer eBook Scroll Vertikal</title>
+  <title>eBook Viewer Scroll Vertikal</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
     html, body {
       margin: 0;
       padding: 0;
       background: #f9f9f9;
       font-family: sans-serif;
-      overflow-x: hidden; /* cegah scroll ke samping */
+      overflow-x: hidden;
     }
 
     #pdf-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 16px;
+      padding: 20px;
       gap: 24px;
     }
 
     canvas {
-      max-width: 100%;        /* agar tidak lebih lebar dari layar */
-      height: auto;           /* pertahankan rasio */
-      border: 1px solid #ccc;
-      background: white;
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid #ddd;
       box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      background: white;
+      max-width: 800px; /* supaya tidak terlalu besar di layar besar */
     }
 
     #loading {
       text-align: center;
+      margin-top: 3rem;
       font-size: 1.2rem;
-      margin: 2rem;
     }
   </style>
 </head>
@@ -53,7 +51,7 @@
 
     function renderPage(pdf, pageNumber) {
       pdf.getPage(pageNumber).then(page => {
-        const scale = 1.5;
+        const scale = 2; // resolusi tinggi agar tidak pecah
         const viewport = page.getViewport({ scale });
 
         const canvas = document.createElement('canvas');
@@ -62,7 +60,7 @@
         canvas.width = viewport.width;
         canvas.height = viewport.height;
 
-        // Untuk responsif: set style width agar canvas mengikuti max 100%
+        // TAMPILAN di layar (responsif)
         canvas.style.width = '100%';
         canvas.style.height = 'auto';
 
@@ -89,7 +87,7 @@
       console.error(error);
     });
 
-    // Cegah shortcut simpan, print, inspect
+    // Blokir shortcut
     document.addEventListener('keydown', function (e) {
       if ((e.ctrlKey && ['s', 'p', 'u'].includes(e.key.toLowerCase())) || e.key === 'F12') {
         e.preventDefault();
